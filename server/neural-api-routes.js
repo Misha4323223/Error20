@@ -278,28 +278,89 @@ function setupNeuralRoutes(app) {
   // 📊 Расширенная статистика нейросети для dashboard - ЧЕСТНАЯ ВЕРСИЯ
   app.get('/api/neural/stats', (req, res) => {
     try {
-      // Честная lite статистика (плоская структура для совместимости)
-      const stats = {
+      const { getGlobalNeuralIntegration } = require('./neural-integration.cjs');
+      const neuralIntegration = getGlobalNeuralIntegration();
+      
+      let actualStats = {
         success: true,
-        neuralMode: 'lite',
-        mode: 'lite', // Дублируем для совместимости
-        modelName: 'BOOOMERANGS-Neural-Lite-3Layer',
-        layers: 3,
-        parameters: '2.4M',
-        memoryUsage: '64MB',
-        isInitialized: true,
-        health: 'good',
-        performance: 75,
+        neuralMode: 'unknown',
+        mode: 'unknown',
+        modelName: 'BOOOMERANGS-Neural-Unknown',
+        layers: 0,
+        parameters: '0',
+        memoryUsage: '0MB',
+        isInitialized: false,
+        health: 'unknown',
+        performance: 0,
         uptime: Math.floor(process.uptime()),
         training_sessions: 0,
         last_training: new Date().toISOString(),
-        status: 'active',
+        status: 'inactive',
         timestamp: new Date().toISOString()
       };
 
-      console.log('📊 [Neural API] Честная lite статистика отправлена');
+      if (neuralIntegration && neuralIntegration.isInitialized) {
+        const currentModel = neuralIntegration.getCurrentModel();
+        
+        if (currentModel && currentModel.getModelStats) {
+          try {
+            const modelStats = currentModel.getModelStats();
+            const layers = modelStats.numLayers || modelStats.layers || 0;
+            const params = modelStats.totalParams || 0;
+            
+            // Определяем реальный режим
+            let realMode = 'unknown';
+            let modelName = 'BOOOMERANGS-Neural-Unknown';
+            let performance = 0;
+            
+            if (params > 100000000) {
+              realMode = 'full';
+              modelName = 'BOOOMERANGS-Neural-Full-12Layer';
+              performance = 95;
+            } else if (params > 1000000) {
+              realMode = 'lite';
+              modelName = 'BOOOMERANGS-Neural-Lite-3Layer';
+              performance = 75;
+            } else {
+              realMode = 'minimal';
+              modelName = 'BOOOMERANGS-Neural-Minimal';
+              performance = 50;
+            }
+            
+            actualStats = {
+              success: true,
+              neuralMode: realMode,
+              mode: realMode,
+              modelName: modelName,
+              layers: layers,
+              parameters: params > 1000000 ? `${(params / 1000000).toFixed(1)}M` : `${Math.round(params / 1000)}K`,
+              memoryUsage: modelStats.memoryEstimate?.estimatedMB ? `${modelStats.memoryEstimate.estimatedMB}MB` : '64MB',
+              isInitialized: true,
+              health: 'good',
+              performance: performance,
+              uptime: Math.floor(process.uptime()),
+              training_sessions: 0,
+              last_training: new Date().toISOString(),
+              status: 'active',
+              timestamp: new Date().toISOString(),
+              // Дополнительная диагностическая информация
+              diagnostic: {
+                declaredMode: neuralIntegration.mode,
+                actualLayers: layers,
+                actualParams: params,
+                consistent: neuralIntegration.mode === realMode
+              }
+            };
+            
+            console.log(`📊 [Neural API] ЧЕСТНАЯ статистика: ${realMode} (${layers} слоев, ${params} параметров)`);
+            
+          } catch (error) {
+            console.error('❌ [Neural API] Ошибка получения статистики модели:', error);
+          }
+        }
+      }
 
-      res.json(stats); // Отправляем плоскую структуру
+      res.json(actualStats);
 
     } catch (error) {
       console.error('❌ Ошибка получения neural stats:', error);

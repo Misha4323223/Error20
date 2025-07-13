@@ -70,11 +70,11 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
   app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
-  
+
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
-  
+
   // Load CommonJS modules dynamically - только те, которые существуют
   let svgGenerator = null;
   let g4fHandlers = null;
@@ -121,13 +121,13 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
   // ИСПРАВЛЕНО: НЕ создаем отдельный HTTP сервер - используем переданный из index.ts
   // Убираем дублирование WebSocket сервера - он уже создан в index.ts
   Logger.info('✅ Routes initialized, WebSocket server handled by index.ts');
-  
+
   // Создаем HTTP сервер только если не передан
   const httpServer = server || createServer(app);
 
   // УБИРАЕМ ДУБЛИРУЮЩИЙ WEBSOCKET СЕРВЕР - используем только тот что в index.ts
   // НЕ вызываем setupWebSocket здесь!
-  
+
   // Setup proxy middleware
   setupProxyMiddleware(app);
 
@@ -1475,11 +1475,11 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
       try {
         const { getGlobalNeuralIntegration } = require('./neural-integration.cjs');
         const neuralIntegration = getGlobalNeuralIntegration();
-        
+
         if (neuralIntegration && neuralIntegration.isInitialized) {
           useNeuralIntegration = true;
           Logger.info('🧠 Neural Integration доступна - включаем гибридный режим');
-          
+
           // Генерируем нейросетевой ответ в параллель с семантикой
           try {
             neuralResponse = await Promise.race([
@@ -1554,7 +1554,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
       ]).catch(async (error) => {
         // ПРИНУДИТЕЛЬНЫЙ FALLBACK для гарантированного ответа
         Logger.warning('⚠️ [HYBRID-FORCED] Conversation engine timeout, генерируем принудительный hybrid ответ');
-        
+
         return {
           reply: `Привет! Я BOOOMERANGS AI - гибридная нейро-семантическая система. 
 
@@ -1692,9 +1692,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     } catch (error) {
       res.status(500).json({ success: false, error: 'Ошибка получения статистики' });
     }
-  });
-
-  // === ОСТАЛЬНЫЕ ENDPOINTS ОСТАЮТСЯ ПРЕЖНИМИ ===
+  });  // === ОСТАЛЬНЫЕ ENDPOINTS ОСТАЮТСЯ ПРЕЖНИМИ ===
   // Логи, векторизация, сессии и другие endpoints работают как прежде
 
   // Добавляем логи endpoint
@@ -1720,51 +1718,78 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
 
   // 🧠 NEURAL NETWORK API ENDPOINTS
 
-  // Neural Status endpoint - ЧЕСТНАЯ ВЕРСИЯ С РЕАЛЬНОЙ ПРОВЕРКОЙ
+  // 🧠 Neural Network Status - ЧЕСТНАЯ ВЕРСИЯ
   app.get('/api/neural/status', async (req, res) => {
     try {
       const { getGlobalNeuralIntegration } = require('./neural-integration.cjs');
       const neuralIntegration = getGlobalNeuralIntegration();
-      
-      // ЧЕСТНАЯ ПРОВЕРКА: используем реальные характеристики модели
-      let realMode = 'lite';
-      let isInitialized = false;
-      
-      if (neuralIntegration) {
-        const currentModel = neuralIntegration.getCurrentModel();
-        const modelStats = currentModel?.getModelStats?.();
-        const actualLayers = modelStats?.numLayers || 0;
-        const actualParams = modelStats?.totalParams || 0;
-        
-        // Определяем реальный режим на основе характеристик модели
-        if (actualLayers >= 10 && actualParams >= 50000000) {
-          realMode = 'full';
-        } else if (actualLayers >= 3 && actualParams >= 1000000) {
-          realMode = 'lite';
-        } else {
-          realMode = 'loading';
-        }
-        
-        isInitialized = currentModel?.isInitialized || false;
-        
-        console.log(`🔍 [neural/status] Честная проверка: ${actualLayers} слоев, ${actualParams} параметров → режим "${realMode}"`);
+
+      if (!neuralIntegration) {
+        return res.json({
+          status: 'not_available',
+          initialized: false,
+          message: 'Neural integration not available'
+        });
       }
-      
+
+      const currentModel = neuralIntegration.getCurrentModel();
+      const isInitialized = neuralIntegration.isInitialized;
+      let actualMode = 'unknown';
+      let actualLayers = 0;
+      let actualParams = 0;
+
+      // ЧЕСТНАЯ ПРОВЕРКА: анализируем реальную модель
+      if (currentModel && currentModel.getModelStats) {
+        try {
+          const stats = currentModel.getModelStats();
+          actualLayers = stats.numLayers || stats.layers || 0;
+          actualParams = stats.totalParams || 0;
+
+          // Определяем реальный режим на основе параметров
+          if (actualParams > 10000000) {
+            actualMode = 'full';
+          } else if (actualParams > 1000000) {
+            actualMode = 'lite';
+          } else {
+            actualMode = 'minimal';
+          }
+
+          console.log(`🔍 [STATUS] ЧЕСТНАЯ проверка: ${actualLayers} слоев, ${actualParams} параметров, режим: ${actualMode}`);
+        } catch (error) {
+          console.log('❌ [STATUS] Ошибка получения статистики модели:', error.message);
+        }
+      }
+
+      // Проверяем соответствие заявленного и реального режима
+      const declaredMode = neuralIntegration.mode;
+      const isConsistent = declaredMode === actualMode;
+
+      if (!isConsistent) {
+        console.log(`⚠️ [STATUS] НЕСООТВЕТСТВИЕ: заявлен "${declaredMode}", реально "${actualMode}"`);
+      }
+
       res.json({
-        success: true,
-        status: realMode, // Честно на основе реальных характеристик
-        message: isInitialized ? `Neural network ready (${realMode} mode)` : 'Neural network initializing...',
-        progress: isInitialized ? 100 : 50,
+        status: actualMode, // Возвращаем РЕАЛЬНЫЙ режим
+        initialized: isInitialized,
+        mode: actualMode, // Честный режим
+        declaredMode: declaredMode, // Что заявляет система
+        consistent: isConsistent, // Соответствует ли заявленное реальному
+        hasModel: !!currentModel,
+        modelStats: currentModel ? {
+          layers: actualLayers,
+          parameters: actualParams,
+          type: actualMode
+        } : null,
+        upgradeInProgress: neuralIntegration.upgradeInProgress || false,
         timestamp: new Date().toISOString()
       });
+
     } catch (error) {
-      Logger.error('Neural status check failed:', error);
-      res.json({
-        success: true,
-        status: 'lite', // Честно сообщаем о lite режиме при ошибке
-        message: 'Neural network initializing...',
-        progress: 100,
-        timestamp: new Date().toISOString()
+      console.error('❌ Ошибка получения neural status:', error);
+      res.status(500).json({
+        status: 'error',
+        initialized: false,
+        error: error.message
       });
     }
   });
@@ -1824,7 +1849,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     try {
       const { getGlobalNeuralIntegration } = require('./neural-integration.cjs');
       const neuralIntegration = getGlobalNeuralIntegration();
-      
+
       // Получаем реальные статистики из модели
       let stats = {
         mode: neuralIntegration.mode || 'loading',
@@ -1890,18 +1915,18 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     try {
       const { getGlobalNeuralIntegration } = require('./neural-integration.cjs');
       const neuralIntegration = getGlobalNeuralIntegration();
-      
+
       // ДИНАМИЧЕСКОЕ РАСШИРЕНИЕ: Адаптивный статус на основе реального состояния
       const realMode = neuralIntegration.mode || 'loading';
       const currentModel = neuralIntegration.getCurrentModel();
-      
+
       // Получаем реальную статистику если модель готова
       let realStats = {
         layers: realMode === 'lite' ? 3 : 12,
         parameters: realMode === 'lite' ? '2.4M' : '115M',
         memory_usage: realMode === 'lite' ? '64MB' : '441MB'
       };
-      
+
       if (currentModel?.getModelStats) {
         try {
           const modelStats = currentModel.getModelStats();
@@ -1920,7 +1945,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
           console.log('⚠️ Не удалось получить статистику модели:', error.message);
         }
       }
-      
+
       const neuralStatus = {
         // ДИНАМИЧЕСКОЕ РАСШИРЕНИЕ: Честный статус
         status: neuralIntegration.isInitialized ? 'active' : 'loading',
@@ -1934,7 +1959,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
         last_training: new Date().toISOString(),
         timestamp: new Date().toISOString()
       };
-      
+
       console.log('📊 [Routes] Neural dashboard status - режим:', realMode);
       res.json(neuralStatus);
     } catch (error) {
