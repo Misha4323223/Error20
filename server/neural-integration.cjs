@@ -234,26 +234,46 @@ class NeuralIntegrationLayer {
         this.progressManager.updateProgress(80, 'Атомарная замена моделей...');
       }
 
+      // ЧЕСТНАЯ ПРОВЕРКА: Устанавливаем mode='full' ТОЛЬКО если модель РЕАЛЬНО работает
       this.neuralCore = fullModel;
       this.neuralLite = null;
-      this.mode = 'full';  // КРИТИЧНО: Устанавливаем mode
-      this.isInitialized = true;  // КРИТИЧНО: Подтверждаем инициализацию
 
-      // ДИНАМИЧЕСКОЕ РАСШИРЕНИЕ: Проверяем что переключение прошло успешно
+      // КРИТИЧНО: Проверяем что переключение РЕАЛЬНО прошло успешно
       const testModel = this.getCurrentModel();
-      if (testModel === this.neuralCore && testModel.isInitialized) {
-        console.log('✅ [upgradeToFull] Переключение на FULL модель подтверждено');
-        console.log('✅ [upgradeToFull] Параметры модели:', testModel.getModelStats?.()?.totalParams || 'N/A');
+      const modelStats = testModel?.getModelStats?.();
+      const actualLayers = modelStats?.numLayers || 0;
+      const actualParams = modelStats?.totalParams || 0;
+      
+      // ЧЕСТНАЯ ПРОВЕРКА: Full модель должна иметь >= 10 слоев и >= 50M параметров
+      const isReallyFull = testModel === this.neuralCore && 
+                          testModel?.isInitialized && 
+                          testModel?.model &&
+                          actualLayers >= 10 && 
+                          actualParams >= 50000000;
+      
+      if (isReallyFull) {
+        console.log('✅ [upgradeToFull] ЧЕСТНАЯ проверка: FULL модель действительно готова');
+        console.log('✅ [upgradeToFull] Реальные слои:', actualLayers);
+        console.log('✅ [upgradeToFull] Реальные параметры:', actualParams);
+        
+        // ЧЕСТНО устанавливаем mode только ПОСЛЕ проверки
+        this.mode = 'full';
+        this.isInitialized = true;
         
         if (this.progressManager) {
           this.progressManager.updateProgress(95, 'Верификация полной модели...');
         }
       } else {
-        console.error('❌ [upgradeToFull] Переключение не удалось, откатываемся');
+        console.error('❌ [upgradeToFull] ЧЕСТНАЯ проверка провалена - модель НЕ является full');
+        console.error('❌ [upgradeToFull] Фактические слои:', actualLayers, '(требуется >= 10)');
+        console.error('❌ [upgradeToFull] Фактические параметры:', actualParams, '(требуется >= 50M)');
+        console.error('❌ [upgradeToFull] Откатываемся к lite режиму');
+        
         this.neuralCore = oldCore;
         this.neuralLite = oldLite;
         this.mode = 'lite';
-        throw new Error('Переключение на FULL модель не удалось');
+        this.isInitialized = true; // lite модель все еще работает
+        throw new Error(`Full модель не прошла честную проверку: ${actualLayers} слоев, ${actualParams} параметров`);
       }
 
       // ДИНАМИЧЕСКОЕ РАСШИРЕНИЕ: Очищаем старые модели с проверкой
@@ -812,12 +832,12 @@ class NeuralIntegrationLayer {
       liteInitialized: this.neuralLite?.isInitialized
     });
     
-    // ПРИОРИТЕТ: Полная модель если готова (независимо от mode)
+    // ЧЕСТНАЯ ПРОВЕРКА: Полная модель ТОЛЬКО если действительно готова
     if (fullReady) {
       console.log('✅ [getCurrentModel] Используем FULL модель (12 слоев)');
-      // ДИНАМИЧЕСКОЕ РАСШИРЕНИЕ: Синхронизируем mode с реальным состоянием
+      // ЧЕСТНОЕ расширение: Синхронизируем mode только при РЕАЛЬНОЙ готовности
       if (this.mode !== 'full') {
-        console.log('🔧 [getCurrentModel] Синхронизируем mode: lite → full');
+        console.log('🔧 [getCurrentModel] ЧЕСТНАЯ синхронизация: lite → full');
         this.mode = 'full';
       }
       return this.neuralCore;
@@ -834,15 +854,15 @@ class NeuralIntegrationLayer {
       return this.neuralLite;
     }
     
-    // ДИНАМИЧЕСКОЕ РАСШИРЕНИЕ: Экстренные случаи с адаптивным переключением
-    if (this.neuralCore && this.neuralCore.model) {
-      console.log('🔧 [getCurrentModel] ДИНАМИЧЕСКОЕ РАСШИРЕНИЕ: используем FULL (адаптивно)');
+    // ЧЕСТНОЕ РАСШИРЕНИЕ: Экстренные случаи только если модель РЕАЛЬНО готова
+    if (this.neuralCore && this.neuralCore.model && this.neuralCore.isInitialized) {
+      console.log('🔧 [getCurrentModel] ЧЕСТНОЕ РАСШИРЕНИЕ: используем FULL (проверена инициализация)');
       this.mode = 'full';
       return this.neuralCore;
     }
     
-    if (this.neuralLite && this.neuralLite.model) {
-      console.log('🔧 [getCurrentModel] ДИНАМИЧЕСКОЕ РАСШИРЕНИЕ: используем LITE (адаптивно)');
+    if (this.neuralLite && this.neuralLite.model && this.neuralLite.isInitialized) {
+      console.log('🔧 [getCurrentModel] ЧЕСТНОЕ РАСШИРЕНИЕ: используем LITE (проверена инициализация)');
       this.mode = 'lite';
       return this.neuralLite;
     }

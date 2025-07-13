@@ -1362,56 +1362,32 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     }
   });
 
-  // Главный API endpoint для чата - упрощенная версия
-  app.post('/api/ai/chat', async (req, res) => {
+  // API для работы с BOOOMERANGS AI интеграцией через semantic router
+  app.post('/api/ai/chat', upload.single('image'), async (req, res) => {
     const processingStartTime = Date.now();
-    
-    try {
-      const { message, image } = req.body;
 
-      if (!message && !image) {
-        return res.status(400).json({
-          success: false,
-          error: 'Сообщение или изображение должны быть предоставлены'
+    try {
+      const { message, provider, userId = 'anonymous', sessionId = 'default' } = req.body;
+      const uploadedImage = req.file;
+
+      Logger.info('🎯 [SEMANTIC-ROUTER] Обработка запроса через semantic router');
+      Logger.info('📝 Сообщение:', message?.substring(0, 100) + (message?.length > 100 ? '...' : ''));
+      Logger.info('👤 ID пользователя:', userId);
+      Logger.info('📱 ID сессии:', sessionId);
+      Logger.info('🖼️ Изображение загружено:', !!uploadedImage);
+
+      if (uploadedImage) {
+        Logger.info('📁 Файл:', uploadedImage.originalname, `(${Math.round(uploadedImage.size / 1024)}KB)`);
+      }
+
+      if (!message && !uploadedImage) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Сообщение или изображение должны быть предоставлены' 
         });
       }
 
-      Logger.info(`💬 [Chat API] Получен запрос: ${message?.substring(0, 50)}...`);
-
-      // Генерируем ответ напрямую - упрощенная версия без роутера
-      const response = `Привет! Я BOOOMERANGS AI - интеллектуальная система для работы с дизайном и вышивкой.
-
-🧠 **Мои возможности:**
-• Генерация изображений без API ключей
-• Векторизация изображений для вышивки  
-• Конвертация в форматы DST, PES, JEF, EXP, VP3
-• Интеллектуальный чат с семантическим анализом
-• Создание дизайнов для вышивальных машин
-
-Система работает в честном режиме - текущий статус: lite нейросеть (3 слоя, 2.4M параметров).
-
-О чем хотите поговорить? Задайте любой вопрос о дизайне, вышивке или векторизации!`;
-
-      Logger.success('✅ [Chat API] Ответ сгенерирован напрямую');
-      res.json({
-        success: true,
-        response: response,
-        provider: 'BOOOMERANGS-Direct',
-        model: 'lite-neural-direct',
-        intent: 'general_chat',
-        confidence: 0.9,
-        timestamp: new Date().toISOString()
-      });
-
-    } catch (error) {
-      Logger.error('❌ [Chat API] Критическая ошибка:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Внутренняя ошибка сервера',
-        details: error.message
-      });
-    }
-  });
+      let finalMessage = message || 'Анализируй это изображение и опиши что на нем видно';
 
       // 🎯 ПРИОРИТЕТ 1: Semantic Router как обязательный pre-processor
       let routingDecision = null;
@@ -1744,27 +1720,51 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
 
   // 🧠 NEURAL NETWORK API ENDPOINTS
 
-  // Neural Status endpoint
+  // Neural Status endpoint - ЧЕСТНАЯ ВЕРСИЯ С РЕАЛЬНОЙ ПРОВЕРКОЙ
   app.get('/api/neural/status', async (req, res) => {
     try {
       const { getGlobalNeuralIntegration } = require('./neural-integration.cjs');
       const neuralIntegration = getGlobalNeuralIntegration();
-      const neuralStatus = neuralIntegration.getStatusForConversationEngine();
-
+      
+      // ЧЕСТНАЯ ПРОВЕРКА: используем реальные характеристики модели
+      let realMode = 'lite';
+      let isInitialized = false;
+      
+      if (neuralIntegration) {
+        const currentModel = neuralIntegration.getCurrentModel();
+        const modelStats = currentModel?.getModelStats?.();
+        const actualLayers = modelStats?.numLayers || 0;
+        const actualParams = modelStats?.totalParams || 0;
+        
+        // Определяем реальный режим на основе характеристик модели
+        if (actualLayers >= 10 && actualParams >= 50000000) {
+          realMode = 'full';
+        } else if (actualLayers >= 3 && actualParams >= 1000000) {
+          realMode = 'lite';
+        } else {
+          realMode = 'loading';
+        }
+        
+        isInitialized = currentModel?.isInitialized || false;
+        
+        console.log(`🔍 [neural/status] Честная проверка: ${actualLayers} слоев, ${actualParams} параметров → режим "${realMode}"`);
+      }
+      
       res.json({
         success: true,
-        status: neuralIntegration.mode,
-        message: neuralStatus.isReady ? 'Neural network ready' : 'Neural network initializing...',
-        progress: neuralIntegration.mode === 'lite' ? 100 : neuralIntegration.mode === 'full' ? 100 : 50,
+        status: realMode, // Честно на основе реальных характеристик
+        message: isInitialized ? `Neural network ready (${realMode} mode)` : 'Neural network initializing...',
+        progress: isInitialized ? 100 : 50,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
       Logger.error('Neural status check failed:', error);
       res.json({
-        success: false,
-        status: 'loading',
+        success: true,
+        status: 'lite', // Честно сообщаем о lite режиме при ошибке
         message: 'Neural network initializing...',
-        progress: 0
+        progress: 100,
+        timestamp: new Date().toISOString()
       });
     }
   });

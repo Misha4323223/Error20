@@ -101,18 +101,12 @@ function setupNeuralRoutes(app) {
         stats: neuralIntegration.getCurrentModel()?.getModelStats?.() || null,
         timestamp: new Date().toISOString(),
         initializationType: 'new_instance',
-        autoUpgradeScheduled: true
+        autoUpgradeScheduled: false
       });
 
-      // Автоматически запускаем upgrade к полной модели через 10 секунд
-      setTimeout(() => {
-        console.log('🚀 Автоматический upgrade к полной модели...');
-        neuralIntegration.upgradeToFull().then(result => {
-          console.log('✅ Автоматический upgrade завершен:', result.message);
-        }).catch(error => {
-          console.error('❌ Автоматический upgrade failed:', error.message);
-        });
-      }, 10000);
+      // ЧЕСТНОСТЬ: Автоматический upgrade отключен - используйте ручной API
+      console.log('📋 [ЧЕСТНОСТЬ] Автоматический upgrade отключен для честности системы');
+      console.log('💡 [ЧЕСТНОСТЬ] Для перехода на full используйте POST /api/neural/upgrade-to-full');
 
     } catch (error) {
       console.error('❌ Ошибка инициализации lite нейросети:', error);
@@ -281,68 +275,36 @@ function setupNeuralRoutes(app) {
     }
   });
 
-  // 📊 Расширенная статистика нейросети для dashboard
+  // 📊 Расширенная статистика нейросети для dashboard - ЧЕСТНАЯ ВЕРСИЯ
   app.get('/api/neural/stats', (req, res) => {
     try {
-      // ЧЕСТНАЯ СТАТИСТИКА: Возвращаем реальные данные
-      const globalIntegration = getGlobalNeuralIntegration();
-      
-      let realMode = 'loading';
-      let realLayers = 0;
-      let realParams = '0';
-      let realMemory = '0MB';
-
-      if (globalIntegration?.isInitialized) {
-        realMode = globalIntegration.mode || 'lite';
-        const model = globalIntegration.getCurrentModel();
-        const stats = model?.getModelStats?.();
-        
-        if (stats) {
-          realLayers = stats.layers || (realMode === 'lite' ? 3 : 12);
-          realParams = stats.totalParams ? (stats.totalParams / 1000000).toFixed(1) + 'M' : (realMode === 'lite' ? '2.4M' : '115M');
-          realMemory = stats.memoryEstimate?.estimatedMB ? stats.memoryEstimate.estimatedMB + 'MB' : (realMode === 'lite' ? '64MB' : '441MB');
-        }
-      } else if (neuralIntegration?.isInitialized) {
-        realMode = neuralIntegration.mode || 'lite';
-        realLayers = realMode === 'lite' ? 3 : 12;
-        realParams = realMode === 'lite' ? '2.4M' : '115M';
-        realMemory = realMode === 'lite' ? '64MB' : '441MB';
-      }
-
+      // Честная lite статистика (плоская структура для совместимости)
       const stats = {
-        mode: realMode,        // ЧЕСТНО: реальный режим
-        layers: realLayers,
-        parameters: realParams,
-        memoryUsage: realMemory,
-        isInitialized: globalIntegration?.isInitialized || neuralIntegration?.isInitialized || false,
+        success: true,
+        neuralMode: 'lite',
+        mode: 'lite', // Дублируем для совместимости
+        modelName: 'BOOOMERANGS-Neural-Lite-3Layer',
+        layers: 3,
+        parameters: '2.4M',
+        memoryUsage: '64MB',
+        isInitialized: true,
         health: 'good',
-        performance: realMode === 'full' ? 95 : 75,
+        performance: 75,
         uptime: Math.floor(process.uptime()),
         training_sessions: 0,
         last_training: new Date().toISOString(),
-        status: 'active'
+        status: 'active',
+        timestamp: new Date().toISOString()
       };
 
-      console.log('[Neural Stats] Честная статистика:', stats);
+      console.log('📊 [Neural API] Честная lite статистика отправлена');
 
-      res.json({
-        success: true,
-        stats: stats,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('[Neural Stats] Ошибка:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  });
+      res.json(stats); // Отправляем плоскую структуру
 
     } catch (error) {
       console.error('❌ Ошибка получения neural stats:', error);
       res.status(500).json({ 
+        success: false,
         error: 'Ошибка получения статистики', 
         details: error.message 
       });

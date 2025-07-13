@@ -40,7 +40,7 @@ try {
   biomimeticSemantics = new BiomimeticSemantics();
   console.log('🦋 Биомиметическая семантика успешно инициализирована');
 } catch (error) {
-  console.warn(`;⚠️ Биомиметическая семантика недоступна: ${error.message}`);
+  console.warn(`⚠️ Биомиметическая семантика недоступна: ${error.message}`);
 }
 
 // Импортируем новые модули
@@ -159,7 +159,7 @@ const processUserInput = async (input, userContext = {}) => {
   let iterationCount = 0;
 
   console.log('🧠 АКТИВАЦИЯ ЕДИНОГО МОДУЛЯ СОЗНАНИЯ');
-  console.log(`;📝 Входной запрос: "${input.substring(0, 100)}..."`);
+  console.log(`📝 Входной запрос: "${input.substring(0, 100)}..."`);
 
   // 🎯 НОВОЕ: Проверяем routing hints от semantic router
   const routingHints = userContext.routingHints;
@@ -213,16 +213,11 @@ const processUserInput = async (input, userContext = {}) => {
         console.log('✅ [HYBRID-CRITICAL] Режим исправлен на FULL!');
       }
       
-      // Если mode = lite и слоев мало, пытаемся upgrade
+      // ЧЕСТНОСТЬ: НЕ запускаем автоматический upgrade - используем только то, что работает
       if (neuralIntegration.mode === 'lite' && actualLayers < 10) {
-        console.log('🚀 [HYBRID-CRITICAL] ЗАПУСКАЕМ АСИНХРОННЫЙ UPGRADE НА FULL...');
-        
-        // Асинхронный upgrade без ожидания (не блокируем ответ)
-        neuralIntegration.upgradeToFull().then(() => {
-          console.log('✅ [HYBRID-CRITICAL] Асинхронный upgrade завершен!');
-        }).catch(upgradeError => {
-          console.log('⚠️ [HYBRID-CRITICAL] Асинхронный upgrade не удался:', upgradeError.message);
-        });
+        console.log('📋 [HYBRID-HONEST] Работаем с LITE нейросетью (честно) - автоматический upgrade отключен');
+        console.log('💡 [HYBRID-HONEST] Для перехода на full пользователь может использовать API endpoint');
+        // Больше НЕ вызываем upgradeToFull() автоматически
       }
     }
     
@@ -251,7 +246,7 @@ const processUserInput = async (input, userContext = {}) => {
     
     // ОБЯЗАТЕЛЬНАЯ ГЕНЕРАЦИЯ от нейросети
     if (neuralIntegration && (neuralIntegration.isInitialized || neuralIntegration.mode === 'lite' || neuralIntegration.mode === 'full')) {
-      console.log(`;🧠 [Hybrid] Neural Integration активна в режиме ${neuralIntegration.mode} - генерируем нейросетевой ответ`);
+      console.log(`🧠 [Hybrid] Neural Integration активна в режиме ${neuralIntegration.mode} - генерируем нейросетевой ответ`);
       
       // Генерируем ОБЯЗАТЕЛЬНЫЙ ответ от нейросети
       try {
@@ -263,7 +258,7 @@ const processUserInput = async (input, userContext = {}) => {
           userContext: userContext
         });
         
-        console.log(`;✅ Нейросеть (${neuralIntegration.mode}) сгенерировала ответ:`, neuralResponse?.substring(0, 100));
+        console.log(`✅ Нейросеть (${neuralIntegration.mode}) сгенерировала ответ:`, neuralResponse?.substring(0, 100));
         
         // Если нейросеть дала ответ, проверяем качество
         if (neuralResponse && neuralResponse.length > 10) {
@@ -293,12 +288,12 @@ const processUserInput = async (input, userContext = {}) => {
                 learningUpdated: false,
                 predictionsGenerated: false,
                 neuralMode: neuralIntegration.mode,
-                provider: neuralIntegration.mode === 'full' ? 'BOOOMERANGS-Neural-Full-12Layer' : `;BOOOMERANGS-Neural-${neuralIntegration.mode}`,
+                provider: neuralIntegration.mode === 'full' ? 'BOOOMERANGS-Neural-Full-12Layer' : `BOOOMERANGS-Neural-${neuralIntegration.mode}`,
                 layersUsed: neuralIntegration.mode === 'full' ? 12 : 3
               }
             };
           } else {
-            console.log(`;⚠️ Neural response низкого качества (${(unkRatio * 100).toFixed(1)}% UNK tokens), переключаемся на семантику`);
+            console.log(`⚠️ Neural response низкого качества (${(unkRatio * 100).toFixed(1)}% UNK tokens), переключаемся на семантику`);
           }
         }
       } catch (neuralError) {
@@ -356,7 +351,7 @@ const processUserInput = async (input, userContext = {}) => {
   // Только если есть качественные ответы, создаем базовый fallback
   if (!semanticResponse && !neuralResponse) {
     console.log('⚠️ [Hybrid] Нет качественных ответов, создаем fallback...');
-    semanticResponse = `;Привет! Я BOOOMERANGS AI - гибридная система с нейросетью и семантическим анализом. Готов помочь с вопросами о векторизации, генерации изображений и конвертации в форматы вышивки. О чем хотите поговорить?`;
+    semanticResponse = `Привет! Я BOOOMERANGS AI - гибридная система с нейросетью и семантическим анализом. Готов помочь с вопросами о векторизации, генерации изображений и конвертации в форматы вышивки. О чем хотите поговорить?`;
   }
   
   let hybridResponse;
@@ -380,25 +375,25 @@ const processUserInput = async (input, userContext = {}) => {
     
     if (neuralQuality && cleanNeural.length > semanticResponse.length * 0.5) {
       // Neural качественный - используем его как основу с семантическим обогащением
-      hybridResponse = `;${cleanNeural}\n\n💡 ${semanticResponse}`;
+      hybridResponse = `${cleanNeural}\n\n💡 ${semanticResponse}`;
       console.log('🧠 [Hybrid] Используем neural как основу + semantic обогащение');
     } else {
       // Semantic как основа с neural элементами
       const neuralInsights = cleanNeural.split(' ').slice(0, 10).join(' ');
-      hybridResponse = `;${semanticResponse}\n\n🤖 ${neuralInsights}`;
+      hybridResponse = `${semanticResponse}\n\n🤖 ${neuralInsights}`;
       console.log('🧠 [Hybrid] Используем semantic как основу + neural элементы');
     }
     
   } else if (neuralResponse) {
     console.log('🧠 [Hybrid] Neural response + базовая семантика');
     const cleanNeural = neuralResponse.replace(/\n\n_.*Generated by.*_$/g, '').trim();
-    hybridResponse = `;${cleanNeural}\n\n💡 ${semanticResponse}`;
+    hybridResponse = `${cleanNeural}\n\n💡 ${semanticResponse}`;
     finalProvider = 'BOOOMERANGS-Neural-Enhanced';
     confidence = 0.90;
     
   } else {
     console.log('🧠 [Hybrid] Semantic response с neural брендингом');
-    hybridResponse = `;${semanticResponse}\n\n🤖 Обработано гибридной нейро-семантической системой BOOOMERANGS`;
+    hybridResponse = `${semanticResponse}\n\n🤖 Обработано гибридной нейро-семантической системой BOOOMERANGS`;
     finalProvider = 'BOOOMERANGS-Semantic-Enhanced';
     confidence = 0.85;
   }
@@ -474,7 +469,7 @@ const processUserInput = async (input, userContext = {}) => {
       // Динамический таймаут на основе routing hints
       const timeout = routingHints?.timeLimit || 5000;
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error(`;Таймаут мета-анализа (${timeout/1000} сек)`)), timeout);
+        setTimeout(() => reject(new Error(`Таймаут мета-анализа (${timeout/1000} сек)`)), timeout);
       });
 
       meta = await Promise.race([metaAnalysisPromise, timeoutPromise]);
@@ -487,12 +482,12 @@ const processUserInput = async (input, userContext = {}) => {
       processingStages.metaAnalysis.status = 'success';
       processingStages.metaAnalysis.data = meta;
       processingStages.metaAnalysis.duration = Date.now() - metaStartTime;
-      console.log(`;✅ ЭТАП 1: Мета-анализ успешен (${processingStages.metaAnalysis.duration}мс)`);
+      console.log(`✅ ЭТАП 1: Мета-анализ успешен (${processingStages.metaAnalysis.duration}мс)`);
     } catch (metaError) {
       processingStages.metaAnalysis.status = 'failed';
       processingStages.metaAnalysis.error = metaError.message;
       processingStages.metaAnalysis.duration = Date.now() - metaStartTime;
-      console.log(`;❌ ЭТАП 1: Мета-анализ не удался (${metaError.message}), используем fallback`);
+      console.log(`❌ ЭТАП 1: Мета-анализ не удался (${metaError.message}), используем fallback`);
 
       // ✅ ИСПРАВЛЕНО: Правильная структура fallback
       meta = {
@@ -529,14 +524,14 @@ const processUserInput = async (input, userContext = {}) => {
         });
         processingStages.emotionalAnalysis.status = 'success';
         processingStages.emotionalAnalysis.data = emotion;
-        console.log(`;✅ ЭТАП 2: Эмоциональный анализ успешен`);
+        console.log(`✅ ЭТАП 2: Эмоциональный анализ успешен`);
       } else {
         throw new Error('emotionalSemanticMatrix.analyzeEmotionalContext недоступна');
       }
     } catch (emotionError) {
       processingStages.emotionalAnalysis.status = 'failed';
       processingStages.emotionalAnalysis.error = emotionError.message;
-      console.log(`;❌ ЭТАП 2: Эмоциональный анализ не удался (${emotionError.message}), используем fallback`);
+      console.log(`❌ ЭТАП 2: Эмоциональный анализ не удался (${emotionError.message}), используем fallback`);
 
       // Fallback эмоциональный анализ
       emotion = {
@@ -547,7 +542,7 @@ const processUserInput = async (input, userContext = {}) => {
       };
     }
     processingStages.emotionalAnalysis.duration = Date.now() - emotionStartTime;
-    console.log(`;⏱️ ЭТАП 2: завершен за ${processingStages.emotionalAnalysis.duration}мс`);
+    console.log(`⏱️ ЭТАП 2: завершен за ${processingStages.emotionalAnalysis.duration}мс`);
 
     // ===== ЭТАП 3: ИЗВЛЕЧЕНИЕ ПАМЯТИ =====
     console.log('💾 ЭТАП 3: Семантическая память...');
@@ -562,11 +557,11 @@ const processUserInput = async (input, userContext = {}) => {
       });
       processingStages.memoryRetrieval.status = 'success';
       processingStages.memoryRetrieval.data = memory;
-      console.log(`;✅ ЭТАП 3: Семантическая память успешно извлечена`);
+      console.log(`✅ ЭТАП 3: Семантическая память успешно извлечена`);
     } catch (memoryError) {
       processingStages.memoryRetrieval.status = 'failed';
       processingStages.memoryRetrieval.error = memoryError.message;
-      console.log(`;❌ ЭТАП 3: Семантическая память не удалась (${memoryError.message}), используем fallback`);
+      console.log(`❌ ЭТАП 3: Семантическая память не удалась (${memoryError.message}), используем fallback`);
 
       // Fallback память
       memory = {
@@ -577,7 +572,7 @@ const processUserInput = async (input, userContext = {}) => {
       };
     }
     processingStages.memoryRetrieval.duration = Date.now() - memoryStartTime;
-    console.log(`;⏱️ ЭТАП 3: завершен за ${processingStages.memoryRetrieval.duration}мс`);
+    console.log(`⏱️ ЭТАП 3: завершен за ${processingStages.memoryRetrieval.duration}мс`);
 
     // ===== ЭТАП 4: ПРОФИЛИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ =====
     console.log('🎭 ЭТАП 4: Профилирование пользователя...');
@@ -624,11 +619,11 @@ const processUserInput = async (input, userContext = {}) => {
 
       processingStages.personaGeneration.status = 'success';
       processingStages.personaGeneration.data = { persona, userProfile };
-      console.log(`;✅ ЭТАП 4: Профилирование успешно завершено`);
+      console.log(`✅ ЭТАП 4: Профилирование успешно завершено`);
     } catch (personaError) {
       processingStages.personaGeneration.status = 'failed';
       processingStages.personaGeneration.error = personaError.message;
-      console.log(`;❌ ЭТАП 4: Профилирование не удалось (${personaError.message}), используем fallback`);
+      console.log(`❌ ЭТАП 4: Профилирование не удалось (${personaError.message}), используем fallback`);
 
       // Fallback персона
       persona = {
@@ -639,7 +634,7 @@ const processUserInput = async (input, userContext = {}) => {
       };
     }
     processingStages.personaGeneration.duration = Date.now() - personaStartTime;
-    console.log(`;⏱️ ЭТАП 4: завершен за ${processingStages.personaGeneration.duration}мс`);
+    console.log(`⏱️ ЭТАП 4: завершен за ${processingStages.personaGeneration.duration}мс`);
 
     // ===== ЭТАП 5: ПРОВЕРКА НА ЗНАНИЕВЫЕ ЗАПРОСЫ И ОБОГАЩЕНИЕ =====
     console.log('🧠 ЭТАП 5: Анализ на знаниевые запросы...');
@@ -665,10 +660,10 @@ const processUserInput = async (input, userContext = {}) => {
           emotionalContext: emotion
         });
 
-        console.log(`;✅ Внешние знания получены: ${externalKnowledge.wikipediaResults?.count || 0} Wikipedia + ${externalKnowledge.scientificResults?.count || 0} научных источников`);
+        console.log(`✅ Внешние знания получены: ${externalKnowledge.wikipediaResults?.count || 0} Wikipedia + ${externalKnowledge.scientificResults?.count || 0} научных источников`);
 
       } catch (knowledgeError) {
-        console.log(`;⚠️ Ошибка получения внешних знаний: ${knowledgeError.message}`);
+        console.log(`⚠️ Ошибка получения внешних знаний: ${knowledgeError.message}`);
         externalKnowledge = null;
       }
     }
@@ -684,9 +679,9 @@ const processUserInput = async (input, userContext = {}) => {
           emotionalContext: emotion,
           userContext
         });
-        console.log(`;✅ Биомиметический анализ завершен (уверенность: ${(biomimeticAnalysis.biomimeticAnalysis.confidence * 100).toFixed(1)}%)`);
+        console.log(`✅ Биомиметический анализ завершен (уверенность: ${(biomimeticAnalysis.biomimeticAnalysis.confidence * 100).toFixed(1)}%)`);
       } catch (bioError) {
-        console.log(`;⚠️ Ошибка биомиметического анализа: ${bioError.message}`);
+        console.log(`⚠️ Ошибка биомиметического анализа: ${bioError.message}`);
       }
     }
 
@@ -731,7 +726,7 @@ const processUserInput = async (input, userContext = {}) => {
 
         // Проверяем готовность нейросети
         const neuralStatus = neuralIntegration.getStatusForConversationEngine();
-        console.log(`;🧠 Статус нейросети: ${neuralStatus.mode} (ready: ${neuralStatus.isReady})`);
+        console.log(`🧠 Статус нейросети: ${neuralStatus.mode} (ready: ${neuralStatus.isReady})`);
 
         // Параллельная генерация с адаптацией
         const [semanticResult, neuralResult] = await Promise.allSettled([
@@ -764,7 +759,7 @@ const processUserInput = async (input, userContext = {}) => {
               preferredSource: preferNeural ? 'neural' : 'semantic'
             }
           };
-          console.log(`;✅ ГИБРИДНАЯ ГЕНЕРАЦИЯ: ${preferNeural ? 'нейросеть' : 'семантика'} (${neuralStatus.mode})`);
+          console.log(`✅ ГИБРИДНАЯ ГЕНЕРАЦИЯ: ${preferNeural ? 'нейросеть' : 'семантика'} (${neuralStatus.mode})`);
         } else if (semanticResponse) {
           rawResponse = semanticResponse;
           console.log('✅ Используем семантический ответ (нейросеть недоступна)');
@@ -808,22 +803,22 @@ const processUserInput = async (input, userContext = {}) => {
       iterationCount++;
       processingStages.responseGeneration.status = 'success';
       processingStages.responseGeneration.data = rawResponse;
-      console.log(`;✅ ЭТАП 7: Ответ успешно сгенерирован`);
+      console.log(`✅ ЭТАП 7: Ответ успешно сгенерирован`);
     } catch (responseError) {
       processingStages.responseGeneration.status = 'failed';
       processingStages.responseGeneration.error = responseError.message;
-      console.log(`;❌ ЭТАП 7: Генерация ответа не удалась`);
-      console.log(`;❌ Ошибка: ${responseError.message}`);
-      console.log(`;❌ Стек: ${responseError.stack}`);
-      console.log(`;❌ Входные данные: ${JSON.stringify({ input: input.substring(0, 100), contextKeys: Object.keys(userContext) })}`);
-      console.log(`;🔄 Переходим к intelligent fallback генерации...`);
+      console.log(`❌ ЭТАП 7: Генерация ответа не удалась`);
+      console.log(`❌ Ошибка: ${responseError.message}`);
+      console.log(`❌ Стек: ${responseError.stack}`);
+      console.log(`❌ Входные данные: ${JSON.stringify({ input: input.substring(0, 100), contextKeys: Object.keys(userContext) })}`);
+      console.log(`🔄 Переходим к intelligent fallback генерации...`);
 
       // Intelligent fallback с сохранением контекста
       rawResponse = await generateContextualFallback(input, thought, userContext);
       iterationCount++;
     }
     processingStages.responseGeneration.duration = Date.now() - responseStartTime;
-    console.log(`;⏱️ ЭТАП 7: завершен за ${processingStages.responseGeneration.duration}мс`);
+    console.log(`⏱️ ЭТАП 7: завершен за ${processingStages.responseGeneration.duration}мс`);
 
     // ===== ЭТАП 9: ОЦЕНКА КАЧЕСТВА И РЕФИНИРОВАНИЕ =====
     console.log('✨ ЭТАП 9: Оценка качества и рефинирование...');
@@ -831,7 +826,7 @@ const processUserInput = async (input, userContext = {}) => {
 
     // Итеративное улучшение (как в GPT-4)
     while (responseQuality < 7 && iterationCount < 3) {
-      console.log(`;🔄 Качество ${responseQuality}/10 недостаточно, улучшаем... (итерация ${iterationCount})`);
+      console.log(`🔄 Качество ${responseQuality}/10 недостаточно, улучшаем... (итерация ${iterationCount})`);
 
       // Добавить проверку на улучшение
       const previousQuality = responseQuality;
@@ -853,7 +848,7 @@ const processUserInput = async (input, userContext = {}) => {
 
       // Если качество не улучшается, прерываем цикл
       if (newQuality <= previousQuality + 0.1) {
-        console.log(`;🛑 Качество не улучшается (${newQuality} <= ${previousQuality + 0.1}), прерываем цикл`);
+        console.log(`🛑 Качество не улучшается (${newQuality} <= ${previousQuality + 0.1}), прерываем цикл`);
         break;
       }
 
@@ -962,15 +957,15 @@ const processUserInput = async (input, userContext = {}) => {
     const totalStages = Object.keys(processingStages).length;
     const systemHealthScore = (successfulStages / totalStages) * 100;
 
-    console.log(`;📊 СИСТЕМА ВОССТАНОВЛЕНИЯ: ${successfulStages}/${totalStages} этапов успешно (${systemHealthScore.toFixed(1)}%)`);
+    console.log(`📊 СИСТЕМА ВОССТАНОВЛЕНИЯ: ${successfulStages}/${totalStages} этапов успешно (${systemHealthScore.toFixed(1)}%)`);
 
     // Детальный отчет по этапам
     Object.entries(processingStages).forEach(([stageName, stage]) => {
       const statusIcon = stage.status === 'success' ? '✅' : stage.status === 'failed' ? '❌' : '⏳';
-      console.log(`;${statusIcon} ${stageName}: ${stage.status} (${stage.duration}мс)${stage.error ? ` - ${stage.error}`; : ''}`);
+      console.log(`${statusIcon} ${stageName}: ${stage.status} (${stage.duration}мс)${stage.error ? ` - ${stage.error}` : ''}`);
     });
 
-    console.log(`;🧠 СОЗНАНИЕ ЗАВЕРШИЛО ОБРАБОТКУ за ${processingTime}мс (${iterationCount} итераций, здоровье: ${systemHealthScore.toFixed(1)}%)`);
+    console.log(`🧠 СОЗНАНИЕ ЗАВЕРШИЛО ОБРАБОТКУ за ${processingTime}мс (${iterationCount} итераций, здоровье: ${systemHealthScore.toFixed(1)}%)`);
 
     return {
       reply: finalResponse.validatedResponse || rawResponse.response,
@@ -1011,7 +1006,7 @@ const processUserInput = async (input, userContext = {}) => {
     if (error.message.includes('generateResponse')) stage = 'response-generation';
     if (error.message.includes('generatePersonaStylePrompt')) stage = 'persona-generation';
 
-    console.error(`;❌ Этап ошибки: ${stage}`);
+    console.error(`❌ Этап ошибки: ${stage}`);
 
     // 🧠 EMERGENCY: Попытка использовать нейросеть в случае критической ошибки
     if (neuralResponse && neuralResponse.length > 20) {
@@ -1035,7 +1030,7 @@ const processUserInput = async (input, userContext = {}) => {
 
     // Fallback для критических ошибок
     return {
-      reply: `;Извините, произошла внутренняя ошибка в системе сознания. Модули семантики временно недоступны. Попробуйте переформулировать запрос.`,
+      reply: `Извините, произошла внутренняя ошибка в системе сознания. Модули семантики временно недоступны. Попробуйте переформулировать запрос.`,
       confidence: 0.1,
       quality: 1,
       metadata: {
@@ -1215,7 +1210,7 @@ const generateContextualFallback = async (input, thought, userContext) => {
     return generateQualityGeneralResponse(input, availableContext);
 
   } catch (error) {
-    console.log(`;❌ Ошибка контекстуального fallback: ${error.message}`);
+    console.log(`❌ Ошибка контекстуального fallback: ${error.message}`);
     return generateMinimalResponse(input);
   }
 };
@@ -1228,14 +1223,14 @@ async function generateKnowledgeBasedResponse(input, externalKnowledge, context)
 
   if (externalKnowledge.searchResults && externalKnowledge.searchResults.length > 0) {
     const firstResult = externalKnowledge.searchResults[0];
-    response = `;Вот что я нашел по вашему запросу:\n\n`;
-    response += `;${firstResult.snippet || firstResult.title || 'Информация найдена'}\n\n`;
+    response = `Вот что я нашел по вашему запросу:\n\n`;
+    response += `${firstResult.snippet || firstResult.title || 'Информация найдена'}\n\n`;
 
     if (externalKnowledge.searchResults.length > 1) {
-      response += `;Есть еще ${externalKnowledge.searchResults.length - 1} источников с дополнительной информацией.`;
+      response += `Есть еще ${externalKnowledge.searchResults.length - 1} источников с дополнительной информацией.`;
     }
   } else {
-    response = `;Ищу информацию по вашему запросу "${input}". К сожалению, подробные данные сейчас недоступны, но я готов обсудить эту тему на основе общих знаний.`;
+    response = `Ищу информацию по вашему запросу "${input}". К сожалению, подробные данные сейчас недоступны, но я готов обсудить эту тему на основе общих знаний.`;
   }
 
   return {
@@ -1347,7 +1342,7 @@ async function generateSemanticBasedResponse(input, semanticResult, context) {
         // ИСПРАВЛЕНО: Анализируем вопрос и даем конкретный ответ
         const lowerInput = input.toLowerCase();
         if (lowerInput.includes('муравей')) {
-          response = `;Муравей - удивительное насекомое! 🐜
+          response = `Муравей - удивительное насекомое! 🐜
 
 **Основные факты:**
 • Муравьи живут колониями от нескольких сотен до миллионов особей
@@ -1363,7 +1358,7 @@ async function generateSemanticBasedResponse(input, semanticResult, context) {
 
 Муравьи - одни из самых социально развитых существ на планете!`;
         } else if (lowerInput.includes('вода')) {
-          response = `;Вода - основа всей жизни на Земле! 💧
+          response = `Вода - основа всей жизни на Земле! 💧
 
 **Химические свойства:**
 • Формула H₂O - два атома водорода и один кислорода
@@ -1382,7 +1377,7 @@ async function generateSemanticBasedResponse(input, semanticResult, context) {
 
 Без воды жизнь невозможна!`;
         } else if (lowerInput.includes('погода') && lowerInput.includes('москв')) {
-          response = `;Для получения актуальной погоды в Москве рекомендую проверить метеосводки! 🌤️
+          response = `Для получения актуальной погоды в Москве рекомендую проверить метеосводки! 🌤️
 
 **Климат Москвы:**
 • Умеренно-континентальный климат
@@ -1396,7 +1391,7 @@ async function generateSemanticBasedResponse(input, semanticResult, context) {
 
 Для точного прогноза советую gismeteo.ru или yandex.ru/pogoda!`;
         } else if (lowerInput.includes('трава')) {
-          response = `;Трава - это большая группа растений семейства злаковых! 🌱
+          response = `Трава - это большая группа растений семейства злаковых! 🌱
 
 **Основные характеристики:**
 • Узкие длинные листья
@@ -1418,7 +1413,7 @@ async function generateSemanticBasedResponse(input, semanticResult, context) {
 
 Травы - основа большинства экосистем планеты!`;
         } else if (lowerInput.includes('любовь')) {
-          response = `;Любовь - одно из самых сложных и прекрасных человеческих чувств! ❤️
+          response = `Любовь - одно из самых сложных и прекрасных человеческих чувств! ❤️
 
 **Типы любви:**
 • **Эрос** - страстная романтическая любовь
@@ -1441,7 +1436,7 @@ async function generateSemanticBasedResponse(input, semanticResult, context) {
 Любовь делает нашу жизнь более яркой и наполненной смыслом!`;
         } else {
           // Общий ответ для других вопросов
-          response = `;Хороший вопрос! Моя семантическая система BOOOMERANGS готова обсуждать любые темы.
+          response = `Хороший вопрос! Моя семантическая система BOOOMERANGS готова обсуждать любые темы.
 
 Я специализируюсь на:
 🎨 Творческих задачах и дизайне
@@ -1456,7 +1451,7 @@ ${input.includes('?') ? 'Уточните что именно вас интер�
         response = "Обязательно помогу! Моя автономная система специализируется на творческих задачах. Опишите что нужно - создать, векторизовать или получить консультацию.";
         break;
       default:
-        response = `;Понимаю ваш запрос. Готов обсудить эту тему подробнее!`;
+        response = `Понимаю ваш запрос. Готов обсудить эту тему подробнее!`;
         break;
     }
   }
@@ -1597,11 +1592,11 @@ const initializeSemanticModules = async () => {
         await Promise.all(initializationPromises);
         console.log('✅ Все модули семантической памяти инициализированы');
       } catch (error) {
-        console.error(`;❌ Ошибка инициализации модулей: ${error.message}`);
+        console.error(`❌ Ошибка инициализации модулей: ${error.message}`);
       }
     }
   } catch (error) {
-    console.error(`;❌ Ошибка инициализации модулей: ${error.message}`);
+    console.error(`❌ Ошибка инициализации модулей: ${error.message}`);
   }
 };
 
@@ -1675,7 +1670,7 @@ const generateIntelligentFallback = async (userInput, options = {}) => {
       const randomTopic = topics[Math.floor(Math.random() * topics.length)];
 
       return {
-        reply: `;Давайте поговорим о ${randomTopic}! Что вас интересует в этой области?`,
+        reply: `Давайте поговорим о ${randomTopic}! Что вас интересует в этой области?`,
         confidence: 0.2,
         quality: 2,
         metadata: {
