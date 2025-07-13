@@ -1,0 +1,91 @@
+{
+  "neural": {
+    "status": {
+      "success": true,
+      "status": "full",
+      "message": "Neural network ready",
+      "progress": 100,
+      "timestamp": "2025-07-13T19:32:01.557Z"
+    },
+    "stats": {
+      "success": true,
+      "stats": {
+        "mode": "lite",
+        "layers": 3,
+        "parameters": "2.4M",
+        "memoryUsage": "64MB",
+        "isInitialized": true,
+        "health": "good",
+        "performance": 75,
+        "uptime": 583,
+        "training_sessions": 0,
+        "last_training": "2025-07-13T19:32:01.582Z",
+        "status": "active"
+      },
+      "timestamp": "2025-07-13T19:32:01.582Z"
+    }
+  },
+  "semantic": {
+    "moduleAvailability": "2/6",
+    "chatAPI": "error"
+  },
+  "integration": {
+    "routes": {
+      "neural": true,
+      "chat": true
+    }
+  },
+  "api": {},
+  "issues": [
+    {
+      "type": "CRITICAL",
+      "component": "Neural API",
+      "issue": "API endpoints return conflicting neural modes",
+      "details": "Status API: full, Stats API: lite",
+      "impact": "Users see incorrect neural network state in UI"
+    },
+    {
+      "type": "ERROR",
+      "component": "Semantic Module",
+      "issue": "Module server/conversation-engine.cjs fails to load",
+      "details": "Unexpected template string",
+      "impact": "Semantic functionality degraded"
+    },
+    {
+      "type": "CRITICAL",
+      "component": "Chat API",
+      "issue": "Chat API not responding correctly",
+      "details": "Ошибка обработки запроса через semantic-router",
+      "impact": "Users cannot interact with AI system"
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "Унифицировать neural API endpoints - сделать status и stats консистентными",
+      "priority": "HIGH",
+      "impact": "Устранит путаницу в интерфейсе пользователя",
+      "implementation": "Обновить neural-api-routes.js для возврата одинаковых статусов"
+    },
+    {
+      "action": "Исправить семантическую систему для работы chat API",
+      "priority": "HIGH",
+      "impact": "Восстановит основную функциональность ИИ чата",
+      "implementation": "Отладить conversation-engine и semantic-router интеграцию"
+    },
+    {
+      "action": "Реализовать настоящую полную нейросеть или честно документировать lite систему",
+      "priority": "MEDIUM",
+      "impact": "Либо получить заявленную функциональность, либо установить реалистичные ожидания",
+      "implementation": "Завершить разработку full модели ИЛИ переписать документацию под lite"
+    }
+  ],
+  "contradictions": [
+    {
+      "type": "Neural API Mismatch",
+      "issue": "Status and Stats APIs return different neural modes",
+      "status_api": "full",
+      "stats_api": "lite",
+      "severity": "HIGH"
+    }
+  ]
+}
